@@ -1,4 +1,9 @@
-const ReviewedProduct = new Schema ({
+const mongoose = require('mongoose');
+mongoose.connect('mongodb://localhost:27017/SDC');
+
+const db = mongoose.connection;
+
+const ReviewedProduct = new mongoose.Schema ({
 
   product_id: Number,
   review_id: Number,
