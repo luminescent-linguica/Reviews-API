@@ -2,42 +2,136 @@ DROP TABLE IF EXISTS ReviewsPhotos;
 DROP TABLE IF EXISTS CharacteristicsReviews;
 DROP TABLE IF EXISTS Characteristics;
 DROP TABLE IF EXISTS Reviews;
+DROP TABLE IF EXISTS CharacteristsData;
+DROP TABLE IF EXISTS Metadata;
+DROP FUNCTION IF EXISTS metadata_update();
 
-CREATE TABLE Reviews (
+CREATE TABLE IF NOT EXISTS Reviews (
   review_id SERIAL PRIMARY KEY,
   product_id INTEGER,
   rating INTEGER,
-  date DATE,
-  summary VARCHAR(60),
+  date BIGINT,
+  summary VARCHAR(1000),
   body VARCHAR(1000),
   recommend BOOLEAN DEFAULT FALSE,
   reported BOOLEAN DEFAULT FALSE,
-  reviewer_name VARCHAR(25),
-  reviewer_email VARCHAR(25),
+  reviewer_name VARCHAR(50),
+  reviewer_email VARCHAR(50),
   response VARCHAR(1000) DEFAULT NULL,
   helpfulness INTEGER
 );
 
-CREATE TABLE Characteristics (
+CREATE TABLE IF NOT EXISTS Characteristics (
   id SERIAL PRIMARY KEY,
   product_id INTEGER,
   name VARCHAR(10)
 );
 
-CREATE TABLE CharacteristicsReviews (
+CREATE TABLE IF NOT EXISTS CharacteristicsReviews (
   id SERIAL PRIMARY KEY,
   review_id INTEGER,
   characteristic_id INTEGER,
   value INTEGER
 );
 
-CREATE TABLE ReviewsPhotos (
+CREATE TABLE IF NOT EXISTS ReviewsPhotos (
   id SERIAL PRIMARY KEY,
-  review_id INTEGER,
+  review_id INTEGER REFERENCES Reviews (review_id),
   link VARCHAR(1000)
 );
 
+CREATE TABLE IF NOT EXISTS CharacteristsData (
+  id SERIAL PRIMARY KEY,
+  review_id INTEGER,
+  product_id INTEGER,
+  size INTEGER DEFAULT NULL,
+  width INTEGER DEFAULT NULL,
+  comfort INTEGER DEFAULT NULL,
+  quality INTEGER DEFAULT NULL,
+  length INTEGER DEFAULT NULL,
+  fit INTEGER DEFAULT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Metadata (
+  product_id INTEGER PRIMARY KEY,
+  one_rating INTEGER,
+  two_rating INTEGER,
+  three_rating INTEGER,
+  four_rating INTEGER,
+  five_rating INTEGER,
+  recommend_true INTEGER,
+  recommend_false INTEGER,
+  size INTEGER DEFAULT NULL,
+  width INTEGER DEFAULT NULL,
+  comfort INTEGER DEFAULT NULL,
+  quality INTEGER DEFAULT NULL,
+  length INTEGER DEFAULT NULL,
+  fit INTEGER DEFAULT NULL
+);
+
 COPY Reviews (review_id, product_id, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
-FROM 'C:\Users\Anthony\Desktop\SDC\reviews.csv'
+FROM '/home/aitzeng/HackReactor/rfp2303-system-design-capstone/Anthonys-Reviews-API/data/reviews.csv'
 DELIMITER ','
 CSV HEADER;
+
+COPY Characteristics (id, product_id, name)
+FROM '/home/aitzeng/HackReactor/rfp2303-system-design-capstone/Anthonys-Reviews-API/data/characteristics.csv'
+DELIMITER ','
+CSV HEADER;
+
+COPY CharacteristicsReviews (id, review_id, characteristic_id, value)
+FROM '/home/aitzeng/HackReactor/rfp2303-system-design-capstone/Anthonys-Reviews-API/data/characteristic_reviews.csv'
+DELIMITER ','
+CSV HEADER;
+
+COPY ReviewsPhotos (id, review_id, link)
+FROM '/home/aitzeng/HackReactor/rfp2303-system-design-capstone/Anthonys-Reviews-API/data/reviews_photos.csv'
+DELIMITER ','
+CSV HEADER;
+
+-- Seed CharacteristicsData
+INSERT INTO CharacteristicsData (review_id, product_id, size, width, comfort, quality, length, fit)
+SELECT
+  review_id,
+
+
+-- INSERT INTO Metadata (product_id) SELECT DISTINCT product_id FROM Reviews;
+-- Seed Metadata
+INSERT INTO Metadata (product_id, one_rating, two_rating, three_rating, four_rating, five_rating, recommend_true, recommend_false)
+SELECT
+  product_id, COUNT(*) FILTER (WHERE rating = 1) AS one_rating, COUNT(*) FILTER (WHERE rating = 2) AS two_rating, COUNT(*) FILTER (WHERE rating = 3) AS three_rating, COUNT(*) FILTER (WHERE rating = 4) AS four_rating, COUNT(*) FILTER (WHERE rating = 5) AS five_rating, COUNT(*) FILTER (WHERE recommend = 'TRUE') AS recommend_true, COUNT(*) FILTER (WHERE recommend = 'FALSE') AS recommend_false
+FROM Reviews
+GROUP BY
+  product_id;
+
+INSERT INTO Metadata (size)
+SELECT AVG(size) AS size
+FROM
+
+CREATE FUNCTION metadata_update()
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+  AS $$
+BEGIN
+-- Update Metadata table with distinct product_id
+  INSERT INTO Metadata (product_id)
+  SELECT DISTINCT product_id
+  FROM Reviews
+  ON CONFLICT (product_id) DO NOTHING;
+  -- Update one_rating column
+  UPDATE Metadata p
+  SET one_rating = subquery.one_rating
+  FROM (
+    SELECT product_id, COUNT(*) FILTER (WHERE rating = 1) AS one_rating
+    FROM Reviews
+    GROUP BY product_id
+  ) AS subquery
+  WHERE p.product_id = subquery.product_id;
+  RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER metadata_update_trigger
+AFTER INSERT ON Reviews
+FOR EACH ROW
+EXECUTE FUNCTION metadata_update();
