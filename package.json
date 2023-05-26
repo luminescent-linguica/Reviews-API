@@ -1,0 +1,25 @@
+{
+  "name": "system-design-capstone",
+  "version": "1.0.0",
+  "description": "System Design Capstone Project",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --env=jsdom",
+    "server-dev": "npx nodemon --watch server server/index.js",
+    "client-dev": "npx webpack --watch",
+    "build": "webpack"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "express": "^4.18.2",
+    "pg": "^8.11.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.41.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-jsx-a11y": "^6.7.1",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0"
+  }
+}
