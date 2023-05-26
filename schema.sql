@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS ReviewsPhotos;
 DROP TABLE IF EXISTS CharacteristicsReviews;
 DROP TABLE IF EXISTS Characteristics;
 DROP TABLE IF EXISTS Reviews;
-DROP TABLE IF EXISTS CharacteristsData;
+DROP TABLE IF EXISTS CharacteristicsMetaData;
 DROP TABLE IF EXISTS Metadata;
 DROP FUNCTION IF EXISTS metadata_update();
 
@@ -34,22 +34,18 @@ CREATE TABLE IF NOT EXISTS CharacteristicsReviews (
   value INTEGER
 );
 
+CREATE TABLE IF NOT EXISTS CharacteristicsMetaData (
+  id SERIAL PRIMARY KEY,
+  review_id INTEGER,
+  product_id INTEGER,
+  name VARCHAR(10),
+  value INTEGER
+);
+
 CREATE TABLE IF NOT EXISTS ReviewsPhotos (
   id SERIAL PRIMARY KEY,
   review_id INTEGER REFERENCES Reviews (review_id),
   link VARCHAR(1000)
-);
-
-CREATE TABLE IF NOT EXISTS CharacteristsData (
-  id SERIAL PRIMARY KEY,
-  review_id INTEGER,
-  product_id INTEGER,
-  size INTEGER DEFAULT NULL,
-  width INTEGER DEFAULT NULL,
-  comfort INTEGER DEFAULT NULL,
-  quality INTEGER DEFAULT NULL,
-  length INTEGER DEFAULT NULL,
-  fit INTEGER DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Metadata (
@@ -61,12 +57,12 @@ CREATE TABLE IF NOT EXISTS Metadata (
   five_rating INTEGER,
   recommend_true INTEGER,
   recommend_false INTEGER,
-  size INTEGER DEFAULT NULL,
-  width INTEGER DEFAULT NULL,
-  comfort INTEGER DEFAULT NULL,
-  quality INTEGER DEFAULT NULL,
-  length INTEGER DEFAULT NULL,
-  fit INTEGER DEFAULT NULL
+  size INTEGER DEFAULT 0,
+  width INTEGER DEFAULT 0,
+  comfort INTEGER DEFAULT 0,
+  quality INTEGER DEFAULT 0,
+  length INTEGER DEFAULT 0,
+  fit INTEGER DEFAULT 0
 );
 
 COPY Reviews (review_id, product_id, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
@@ -89,13 +85,18 @@ FROM '/home/aitzeng/HackReactor/rfp2303-system-design-capstone/Anthonys-Reviews-
 DELIMITER ','
 CSV HEADER;
 
--- Seed CharacteristicsData
-INSERT INTO CharacteristicsData (review_id, product_id, size, width, comfort, quality, length, fit)
+-- Seed CharacteristicsMetaData
+INSERT INTO CharacteristicsMetaData (review_id, product_id, name, value)
 SELECT
-  review_id,
+  CharacteristicsReviews.review_id,
+  Characteristics.product_id,
+  Characteristics.name,
+  CharacteristicsReviews.value
+FROM
+  CharacteristicsReviews
+JOIN
+  Characteristics ON CharacteristicsReviews.characteristic_id = Characteristics.id;
 
-
--- INSERT INTO Metadata (product_id) SELECT DISTINCT product_id FROM Reviews;
 -- Seed Metadata
 INSERT INTO Metadata (product_id, one_rating, two_rating, three_rating, four_rating, five_rating, recommend_true, recommend_false)
 SELECT
@@ -104,9 +105,30 @@ FROM Reviews
 GROUP BY
   product_id;
 
-INSERT INTO Metadata (size)
-SELECT AVG(size) AS size
-FROM
+UPDATE Metadata
+SET
+  size = subquery.size,
+  width = subquery.width,
+  comfort = subquery.comfort,
+  quality = subquery.quality,
+  length = subquery.length,
+  fit = subquery.fit
+FROM (
+  SELECT
+    product_id,
+    AVG(value) FILTER (WHERE name = 'Size') AS size,
+    AVG(value) FILTER (WHERE name = 'Width') AS width,
+    AVG(value) FILTER (WHERE name = 'Comfort') AS comfort,
+    AVG(value) FILTER (WHERE name = 'Quality') AS quality,
+    AVG(value) FILTER (WHERE name = 'Length') AS length,
+    AVG(value) FILTER (WHERE name = 'Fit') AS fit
+  FROM
+    CharacteristicsMetaData
+  GROUP BY
+    product_id
+) AS subquery
+WHERE
+  Metadata.product_id = subquery.product_id;
 
 CREATE FUNCTION metadata_update()
   RETURNS TRIGGER
