@@ -24,6 +24,8 @@ module.exports = {
   },
   getMetadata: (params) =>
     // console.log('getMetadata inoked');
-    pool.query('SELECT * FROM Metadata WHERE product_id = $1', [params.product_id])
-  ,
+    pool.query('SELECT * FROM Metadata WHERE product_id = $1', [params.product_id]),
+  postReview: (params) => {
+    pool.query('INSERT INTO ')
+  },
 };
