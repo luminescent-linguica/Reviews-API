@@ -4,11 +4,14 @@
   "description": "System Design Capstone Project",
   "main": "index.js",
   "scripts": {
-    "server-dev": "node server/index.js"
+    "start": "nodemon server/index.js"
   },
   "dependencies": {
     "axios": "^1.4.0",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "mongoose": "^7.2.1",
+    "nodemon": "^2.0.22",
     "pg": "^8.11.0"
   },
   "devDependencies": {

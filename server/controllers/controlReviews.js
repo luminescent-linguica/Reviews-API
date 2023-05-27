@@ -10,7 +10,12 @@ module.exports = {
     };
     modelReviews.getReviews(params)
       .then((result) => {
-        res.status(200).send(result);
+        const obj = {};
+        obj.product = params.product_id;
+        obj.page = 1;
+        obj.count = params.count;
+        obj.results = result.rows;
+        res.status(200).send(obj);
       })
       .catch((err) => {
         console.log(err);
