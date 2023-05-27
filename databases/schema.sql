@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS CharacteristicsReviews (
   id SERIAL PRIMARY KEY,
   review_id INTEGER,
   characteristic_id INTEGER,
-  value INTEGER
+  value INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS CharacteristicsMetaData (
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS CharacteristicsMetaData (
   review_id INTEGER,
   product_id INTEGER,
   name VARCHAR(10),
-  value INTEGER
+  value INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS ReviewsPhotos (
