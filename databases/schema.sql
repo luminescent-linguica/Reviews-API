@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS CharacteristicsMetaData (
 CREATE TABLE IF NOT EXISTS ReviewsPhotos (
   id SERIAL PRIMARY KEY,
   review_id INTEGER REFERENCES Reviews (review_id),
-  link VARCHAR(1000)
+  url VARCHAR(1000)
 );
 
 CREATE TABLE IF NOT EXISTS Metadata (
@@ -80,7 +80,7 @@ FROM '/home/aitzeng/HackReactor/rfp2303-system-design-capstone/Anthonys-Reviews-
 DELIMITER ','
 CSV HEADER;
 
-COPY ReviewsPhotos (id, review_id, link)
+COPY ReviewsPhotos (id, review_id, url)
 FROM '/home/aitzeng/HackReactor/rfp2303-system-design-capstone/Anthonys-Reviews-API/data/reviews_photos.csv'
 DELIMITER ','
 CSV HEADER;
