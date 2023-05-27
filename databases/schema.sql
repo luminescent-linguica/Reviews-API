@@ -1,9 +1,4 @@
-DROP TABLE IF EXISTS ReviewsPhotos;
-DROP TABLE IF EXISTS CharacteristicsReviews;
-DROP TABLE IF EXISTS Characteristics;
-DROP TABLE IF EXISTS Reviews;
-DROP TABLE IF EXISTS CharacteristicsMetaData;
-DROP TABLE IF EXISTS Metadata;
+DROP TABLE IF EXISTS ReviewsPhotos, CharacteristicsReviews, Characteristics, Reviews, CharacteristicsMetaData, Metadata
 DROP FUNCTION IF EXISTS metadata_update();
 
 CREATE TABLE IF NOT EXISTS Reviews (
@@ -86,8 +81,9 @@ DELIMITER ','
 CSV HEADER;
 
 -- Seed CharacteristicsMetaData
-INSERT INTO CharacteristicsMetaData (review_id, product_id, name, value)
+INSERT INTO CharacteristicsMetaData (id, review_id, product_id, name, value)
 SELECT
+  CharacteristicsReviews.id,
   CharacteristicsReviews.review_id,
   Characteristics.product_id,
   Characteristics.name,
@@ -140,15 +136,49 @@ BEGIN
   SELECT DISTINCT product_id
   FROM Reviews
   ON CONFLICT (product_id) DO NOTHING;
-  -- Update one_rating column
+  -- UPDATE CharacteristicsMetaData with distinct id
+  INSERT INTO CharacteristicsMetaData (id)
+  SELECT DISTINCT id
+  FROM CharacteristicsReviews
+  ON CONFLICT (id) DO NOTHING;
+  -- Update ratings column
   UPDATE Metadata p
-  SET one_rating = subquery.one_rating
+  SET
+  one_rating = subquery.one_rating,
+  two_rating = subquery.two_rating,
+  three_rating = subquery.three_rating,
+  four_rating = subquery.four_rating,
+  five_rating = subquery.five_rating
   FROM (
-    SELECT product_id, COUNT(*) FILTER (WHERE rating = 1) AS one_rating
+    SELECT product_id, COUNT(*) FILTER (WHERE rating = 1) AS one_rating, COUNT(*) FILTER (WHERE rating = 2) AS two_rating, COUNT(*) FILTER (WHERE rating = 3) AS three_rating, COUNT(*) FILTER (WHERE rating = 4) AS four_rating, COUNT(*) FILTER (WHERE rating = 5) AS five_rating
     FROM Reviews
     GROUP BY product_id
   ) AS subquery
   WHERE p.product_id = subquery.product_id;
+  UPDATE Metadata
+  SET
+    size = subquery.size,
+    width = subquery.width,
+    comfort = subquery.comfort,
+    quality = subquery.quality,
+    length = subquery.length,
+    fit = subquery.fit
+  FROM (
+    SELECT
+      product_id,
+      AVG(value) FILTER (WHERE name = 'Size') AS size,
+      AVG(value) FILTER (WHERE name = 'Width') AS width,
+      AVG(value) FILTER (WHERE name = 'Comfort') AS comfort,
+      AVG(value) FILTER (WHERE name = 'Quality') AS quality,
+      AVG(value) FILTER (WHERE name = 'Length') AS length,
+      AVG(value) FILTER (WHERE name = 'Fit') AS fit
+    FROM
+      CharacteristicsMetaData
+    GROUP BY
+      product_id
+  ) AS subquery
+  WHERE
+    Metadata.product_id = subquery.product_id;
   RETURN NULL;
 END;
 $$;
