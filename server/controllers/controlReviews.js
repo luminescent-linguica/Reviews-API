@@ -66,7 +66,34 @@ module.exports = {
         res.sendStatus(500);
       });
   },
-  // postRev: (req, res) => {
-  //   console.log(req.body);
-  // },
+  postRev: (req, res) => {
+    modelReviews.postReview(req.body)
+      .then((result) => {
+        res.sendStatus(200);
+      })
+      .catch((err) => {
+        console.log(err);
+        res.sendStatus(500);
+      });
+  },
+  putHelpful: (req, res) => {
+    modelReviews.putHelpful(req.params)
+    .then((result) => {
+      res.sendStatus(200);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.sendStatus(500);
+    })
+  },
+  putReport: (req, res) => {
+    modelReviews.putReport(req.params)
+    .then((result) => {
+      res.sendStatus(200);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.sendStatus(500);
+    })
+  }
 };
