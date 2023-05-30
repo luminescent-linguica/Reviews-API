@@ -1,9 +1,14 @@
-DROP TABLE IF EXISTS ReviewsPhotos, CharacteristicsReviews, Characteristics, Reviews, CharacteristicsMetaData, Metadata
+DROP TABLE IF EXISTS ReviewsPhotos;
+DROP TABLE IF EXISTS CharacteristicsReviews;
+DROP TABLE IF EXISTS Characteristics;
+DROP TABLE IF EXISTS Reviews;
+DROP TABLE IF EXISTS CharacteristicsMetaData;
+DROP TABLE IF EXISTS Metadata;
 DROP FUNCTION IF EXISTS metadata_update();
 
 CREATE TABLE IF NOT EXISTS Reviews (
   review_id SERIAL PRIMARY KEY,
-  product_id INTEGER,
+  product_id INTEGER NOT NULL,
   rating INTEGER,
   date BIGINT,
   summary VARCHAR(1000),
@@ -13,7 +18,7 @@ CREATE TABLE IF NOT EXISTS Reviews (
   reviewer_name VARCHAR(50),
   reviewer_email VARCHAR(50),
   response VARCHAR(1000) DEFAULT NULL,
-  helpfulness INTEGER
+  helpfulness INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS Characteristics (
@@ -101,6 +106,16 @@ FROM Reviews
 GROUP BY
   product_id;
 
+-- Create Index for Reviews
+CREATE INDEX idx_reviews_product_helpfulness ON Reviews (product_id, helpfulness DESC);
+CREATE INDEX idx_reviews_product_newest ON Reviews (product_id, date DESC);
+CREATE INDEX inx_reviews_review_id ON Reviews (review_id);
+CREATE INDEX indx_review_photos_id ON ReviewsPhotos (review_id);
+
+-- Update serial ID # for Reviews
+SELECT setval('public.reviews_review_id_seq', (SELECT MAX(review_id) FROM Reviews)+1);
+
+
 UPDATE Metadata
 SET
   size = subquery.size,
@@ -126,64 +141,64 @@ FROM (
 WHERE
   Metadata.product_id = subquery.product_id;
 
-CREATE FUNCTION metadata_update()
-  RETURNS TRIGGER
-  LANGUAGE plpgsql
-  AS $$
-BEGIN
--- Update Metadata table with distinct product_id
-  INSERT INTO Metadata (product_id)
-  SELECT DISTINCT product_id
-  FROM Reviews
-  ON CONFLICT (product_id) DO NOTHING;
-  -- UPDATE CharacteristicsMetaData with distinct id
-  INSERT INTO CharacteristicsMetaData (id)
-  SELECT DISTINCT id
-  FROM CharacteristicsReviews
-  ON CONFLICT (id) DO NOTHING;
-  -- Update ratings column
-  UPDATE Metadata p
-  SET
-  one_rating = subquery.one_rating,
-  two_rating = subquery.two_rating,
-  three_rating = subquery.three_rating,
-  four_rating = subquery.four_rating,
-  five_rating = subquery.five_rating
-  FROM (
-    SELECT product_id, COUNT(*) FILTER (WHERE rating = 1) AS one_rating, COUNT(*) FILTER (WHERE rating = 2) AS two_rating, COUNT(*) FILTER (WHERE rating = 3) AS three_rating, COUNT(*) FILTER (WHERE rating = 4) AS four_rating, COUNT(*) FILTER (WHERE rating = 5) AS five_rating
-    FROM Reviews
-    GROUP BY product_id
-  ) AS subquery
-  WHERE p.product_id = subquery.product_id;
-  UPDATE Metadata
-  SET
-    size = subquery.size,
-    width = subquery.width,
-    comfort = subquery.comfort,
-    quality = subquery.quality,
-    length = subquery.length,
-    fit = subquery.fit
-  FROM (
-    SELECT
-      product_id,
-      AVG(value) FILTER (WHERE name = 'Size') AS size,
-      AVG(value) FILTER (WHERE name = 'Width') AS width,
-      AVG(value) FILTER (WHERE name = 'Comfort') AS comfort,
-      AVG(value) FILTER (WHERE name = 'Quality') AS quality,
-      AVG(value) FILTER (WHERE name = 'Length') AS length,
-      AVG(value) FILTER (WHERE name = 'Fit') AS fit
-    FROM
-      CharacteristicsMetaData
-    GROUP BY
-      product_id
-  ) AS subquery
-  WHERE
-    Metadata.product_id = subquery.product_id;
-  RETURN NULL;
-END;
-$$;
+-- CREATE FUNCTION metadata_update()
+--   RETURNS TRIGGER
+--   LANGUAGE plpgsql
+--   AS $$
+-- BEGIN
+-- -- Update Metadata table with distinct product_id
+--   INSERT INTO Metadata (product_id)
+--   SELECT DISTINCT product_id
+--   FROM Reviews
+--   ON CONFLICT (product_id) DO NOTHING;
+--   -- UPDATE CharacteristicsMetaData with distinct id
+--   INSERT INTO CharacteristicsMetaData (id)
+--   SELECT DISTINCT id
+--   FROM CharacteristicsReviews
+--   ON CONFLICT (id) DO NOTHING;
+--   -- Update ratings column
+--   UPDATE Metadata p
+--   SET
+--   one_rating = subquery.one_rating,
+--   two_rating = subquery.two_rating,
+--   three_rating = subquery.three_rating,
+--   four_rating = subquery.four_rating,
+--   five_rating = subquery.five_rating
+--   FROM (
+--     SELECT product_id, COUNT(*) FILTER (WHERE rating = 1) AS one_rating, COUNT(*) FILTER (WHERE rating = 2) AS two_rating, COUNT(*) FILTER (WHERE rating = 3) AS three_rating, COUNT(*) FILTER (WHERE rating = 4) AS four_rating, COUNT(*) FILTER (WHERE rating = 5) AS five_rating
+--     FROM Reviews
+--     GROUP BY product_id
+--   ) AS subquery
+--   WHERE p.product_id = subquery.product_id;
+--   UPDATE Metadata
+--   SET
+--     size = subquery.size,
+--     width = subquery.width,
+--     comfort = subquery.comfort,
+--     quality = subquery.quality,
+--     length = subquery.length,
+--     fit = subquery.fit
+--   FROM (
+--     SELECT
+--       product_id,
+--       AVG(value) FILTER (WHERE name = 'Size') AS size,
+--       AVG(value) FILTER (WHERE name = 'Width') AS width,
+--       AVG(value) FILTER (WHERE name = 'Comfort') AS comfort,
+--       AVG(value) FILTER (WHERE name = 'Quality') AS quality,
+--       AVG(value) FILTER (WHERE name = 'Length') AS length,
+--       AVG(value) FILTER (WHERE name = 'Fit') AS fit
+--     FROM
+--       CharacteristicsMetaData
+--     GROUP BY
+--       product_id
+--   ) AS subquery
+--   WHERE
+--     Metadata.product_id = subquery.product_id;
+--   RETURN NULL;
+-- END;
+-- $$;
 
-CREATE TRIGGER metadata_update_trigger
-AFTER INSERT ON Reviews
-FOR EACH ROW
-EXECUTE FUNCTION metadata_update();
+-- CREATE TRIGGER metadata_update_trigger
+-- AFTER INSERT ON Reviews
+-- FOR EACH ROW
+-- EXECUTE FUNCTION metadata_update();
