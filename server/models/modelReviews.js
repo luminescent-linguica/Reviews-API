@@ -57,16 +57,16 @@ module.exports = {
 FROM
   Metadata AS md
 WHERE
-  product_id = $1`, [params.product_id] ),
+  product_id = $1`, [params.product_id] );
   },
   // getMetadata: (params) => pool.query('SELECT * FROM Metadata WHERE product_id = $1', [params.product_id]),
   postReview: (params) => {
-    return pool.query('INSERT INTO Reviews (product_id, rating, summary, body, recommend, reviewer_name, reviewer_email) VALUES ($1, $2, $3, $4, $5, $6, $7)', [params.product_id, params.rating, params.summary, params.body, params.recommend, params.name, params.email]),
+    return pool.query('INSERT INTO Reviews (product_id, rating, summary, body, recommend, reviewer_name, reviewer_email) VALUES ($1, $2, $3, $4, $5, $6, $7)', [params.product_id, params.rating, params.summary, params.body, params.recommend, params.name, params.email]);
   },
   putHelpful: (params) => {
-    return pool.query('UPDATE Reviews SET helpfulness = helpfulness+1 WHERE review_id = $1', [params.review_id]),
+    return pool.query('UPDATE Reviews SET helpfulness = helpfulness+1 WHERE review_id = $1', [params.review_id]);
   },
   putReport: (params) => {
-    return pool.query('UPDATE Reviews SET reported = TRUE WHERE review_id = $1', [params.review_id])
-  },
+    return pool.query('UPDATE Reviews SET reported = TRUE WHERE review_id = $1', [params.review_id]);
+  }
 };
