@@ -1,0 +1,23 @@
+{
+  "config": {
+    "target": "http://localhost:3000",
+    "phases": [
+      {
+        "duration": 30,
+        "arrivalRate": 1000
+      }
+    ]
+  },
+  "scenarios": [
+    {
+      "name": "GET Reviews",
+      "flow": [
+        {
+          "get": {
+            "url": "/reviews/meta/?product_id=2"
+          }
+        }
+      ]
+    }
+  ]
+}
