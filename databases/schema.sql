@@ -110,8 +110,10 @@ GROUP BY
 CREATE INDEX index_reviews_product_helpfulness ON Reviews (product_id, helpfulness DESC);
 CREATE INDEX index_reviews_product_newest ON Reviews (product_id, date DESC);
 CREATE INDEX index_reviews_review_id ON Reviews (review_id);
+CREATE INDEX index_reviews_review_helpfulness ON Reviews (review_id, helpfulness);
 CREATE INDEX index_review_photos_id ON ReviewsPhotos (review_id);
 CREATE INDEX index_metadata ON Metadata (product_id);
+CREATE INDEX index_characteristicsMeta ON CharacteristicsMetaData (product_id);
 
 -- Update serial ID # for Reviews
 SELECT setval('public.reviews_review_id_seq', (SELECT MAX(review_id) FROM Reviews)+1);

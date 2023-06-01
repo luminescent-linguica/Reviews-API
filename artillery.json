@@ -10,11 +10,11 @@
   },
   "scenarios": [
     {
-      "name": "GET Reviews",
+      "name": "PUT Reviews",
       "flow": [
         {
-          "get": {
-            "url": "/reviews/meta/?product_id=2"
+          "put": {
+            "url": "/reviews/2/helpful"
           }
         }
       ]
