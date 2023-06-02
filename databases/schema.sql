@@ -66,22 +66,22 @@ CREATE TABLE IF NOT EXISTS Metadata (
 );
 
 COPY Reviews (review_id, product_id, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
-FROM '/home/aitzeng/HackReactor/rfp2303-system-design-capstone/Anthonys-Reviews-API/data/reviews.csv'
+FROM '/home/ubuntu/database/csv/reviews.csv'
 DELIMITER ','
 CSV HEADER;
 
 COPY Characteristics (id, product_id, name)
-FROM '/home/aitzeng/HackReactor/rfp2303-system-design-capstone/Anthonys-Reviews-API/data/characteristics.csv'
+FROM '/home/ubuntu/database/csv/characteristics.csv'
 DELIMITER ','
 CSV HEADER;
 
 COPY CharacteristicsReviews (id, review_id, characteristic_id, value)
-FROM '/home/aitzeng/HackReactor/rfp2303-system-design-capstone/Anthonys-Reviews-API/data/characteristic_reviews.csv'
+FROM '/home/ubuntu/database/csv/characteristic_reviews.csv'
 DELIMITER ','
 CSV HEADER;
 
 COPY ReviewsPhotos (id, review_id, url)
-FROM '/home/aitzeng/HackReactor/rfp2303-system-design-capstone/Anthonys-Reviews-API/data/reviews_photos.csv'
+FROM '/home/ubuntu/database/csv/reviews_photos.csv'
 DELIMITER ','
 CSV HEADER;
 
